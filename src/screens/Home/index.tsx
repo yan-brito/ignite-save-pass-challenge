@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
+import { Alert } from 'react-native';
 
 import { Header } from '../../components/Header';
 import { SearchBar } from '../../components/SearchBar';
@@ -13,7 +14,6 @@ import {
   TotalPassCount,
   LoginList,
 } from './styles';
-
 interface LoginDataProps {
   id: string;
   service_name: string;
@@ -30,15 +30,35 @@ export function Home() {
 
   async function loadData() {
     const dataKey = '@savepass:logins';
-    // Get asyncStorage data, use setSearchListData and setData
+
+    try {
+      const storedData = await AsyncStorage.getItem(dataKey);
+  
+      if(storedData) {
+        const storedCredentials = JSON.parse(storedData) as LoginListDataProps;
+  
+        setSearchListData(storedCredentials);
+        setData(storedCredentials);
+      }
+    } catch (error) {
+      Alert.alert('Falha ao carregar dados!')
+    }
   }
 
   function handleFilterLoginData() {
-    // Filter results inside data, save with setSearchListData
+    if(searchText.length > 0) {
+      const matches: LoginListDataProps = [];
+      data.forEach(item => {
+        const match = item.service_name.toUpperCase().startsWith(searchText.toUpperCase());
+        match && matches.push(item);
+      });
+
+      setSearchListData(matches);
+    }
   }
 
   function handleChangeInputText(text: string) {
-    // Update searchText value
+    setSearchText(text);
   }
 
   useFocusEffect(useCallback(() => {
